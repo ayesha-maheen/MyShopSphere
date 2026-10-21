@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,6 +13,8 @@ model cart {
   updatedAt DateTime
   user      user       @relation(fields: [userId], references: [id], map: "Cart_userId_fkey")
   cartitem  cartitem[]
+
+  @@map("Cart")
 }
 
 model cartitem {
@@ -26,6 +27,7 @@ model cartitem {
 
   @@unique([cartId, productId], map: "CartItem_cartId_productId_key")
   @@index([productId], map: "CartItem_productId_fkey")
+  @@map("CartItem")
 }
 
 model category {
@@ -34,11 +36,12 @@ model category {
   parentId      Int?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime
-  parent        category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  parent        category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull, map: "Category_parentId_fkey")
   subcategories category[] @relation("CategoryHierarchy")
   product       product[]
 
-  @@index([parentId])
+  @@index([parentId], map: "Category_parentId_idx")
+  @@map("Category")
 }
 
 model order {
@@ -56,6 +59,7 @@ model order {
   orderitem     orderitem[]
 
   @@index([userId], map: "Order_userId_fkey")
+  @@map("Order")
 }
 
 model orderitem {
@@ -69,6 +73,7 @@ model orderitem {
 
   @@index([orderId], map: "OrderItem_orderId_fkey")
   @@index([productId], map: "OrderItem_productId_fkey")
+  @@map("OrderItem")
 }
 
 model product {
@@ -86,6 +91,7 @@ model product {
   category    category    @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
 
   @@index([categoryId], map: "Product_categoryId_fkey")
+  @@map("Product")
 }
 
 model user {
@@ -98,4 +104,6 @@ model user {
   updatedAt DateTime
   cart      cart?
   order     order[]
+
+  @@map("User")
 }

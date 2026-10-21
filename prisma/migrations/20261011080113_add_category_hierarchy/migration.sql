@@ -1,8 +1,8 @@
 -- AlterTable
-ALTER TABLE `category` ADD COLUMN `parentId` INTEGER NULL;
+ALTER TABLE `Category` ADD COLUMN `parentId` INTEGER NULL;
 
 -- CreateIndex
-CREATE INDEX `category_parentId_idx` ON `category`(`parentId`);
+CREATE INDEX `Category_parentId_idx` ON `Category`(`parentId`);
 
 -- AddForeignKey
-ALTER TABLE `category` ADD CONSTRAINT `category_parentId_fkey` FOREIGN KEY (`parentId`) REFERENCES `category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `Category` ADD CONSTRAINT `Category_parentId_fkey` FOREIGN KEY (`parentId`) REFERENCES `Category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
