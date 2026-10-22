@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime
+  user      user       @relation(fields: [userId], references: [id], map: "Cart_userId_fkey")
+  cartitem  cartitem[]
+
+  @@map("Cart")
+}
+
+model cartitem {
+  id        Int     @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int     @default(1)
+  cart      cart    @relation(fields: [cartId], references: [id], onDelete: Cascade, map: "CartItem_cartId_fkey")
+  product   product @relation(fields: [productId], references: [id], map: "CartItem_productId_fkey")
+
+  @@unique([cartId, productId])
+  @@index([productId], map: "CartItem_productId_fkey")
+  @@map("CartItem")
+}
+
+model category {
+  id            Int        @id @default(autoincrement())
+  name          String     @unique
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime
+  parentId      Int?
+  parent        category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], map: "Category_parentId_fkey")
+  subcategories category[] @relation("CategoryHierarchy")
+  product       product[]
+
+  @@index([parentId])
+  @@map("Category")
+}
+
+model order {
+  id            Int         @id @default(autoincrement())
+  userId        Int?
+  total         Decimal     @db.Decimal(10, 2)
+  status        String      @default("PENDING")
+  address       String      @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime
+  customerName  String      @default("")
+  paymentMethod String      @default("COD")
+  phone         String      @default("")
+  user          user?       @relation(fields: [userId], references: [id], map: "Order_userId_fkey")
+  orderitem     orderitem[]
+
+  @@index([userId], map: "Order_userId_fkey")
+  @@map("Order")
+}
+
+model orderitem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+  order     order   @relation(fields: [orderId], references: [id], onDelete: Cascade, map: "OrderItem_orderId_fkey")
+  product   product @relation(fields: [productId], references: [id], map: "OrderItem_productId_fkey")
+
+  @@index([orderId], map: "OrderItem_orderId_fkey")
+  @@index([productId], map: "OrderItem_productId_fkey")
+  @@map("OrderItem")
+}
+
+model product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String      @db.Text
+  price       Decimal     @db.Decimal(10, 2)
+  image       String?
+  stock       Int         @default(0)
+  categoryId  Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime
+  cartitem    cartitem[]
+  orderitem   orderitem[]
+  category    category    @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
+
+  @@index([categoryId], map: "Product_categoryId_fkey")
+  @@map("Product")
+}
+
+model user {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  cart      cart?
+  order     order[]
+
+  @@map("User")
+}
