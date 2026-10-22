@@ -15,7 +15,7 @@ import CartItem from "@/components/cart/cartItem";
 import { useCart } from "./CartProvider";
 
 type CartProduct = {
-  id: string;
+  id: number;
   name: string;
   price: number;
   image: string;
@@ -34,7 +34,7 @@ export default function CartDrawer() {
     updateQuantity,
   } = useCart();
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const selectedItems = items.filter((item: CartProduct) =>
     selectedIds.includes(item.id)
@@ -49,7 +49,7 @@ export default function CartDrawer() {
   const allSelected =
     items.length > 0 && selectedItems.length === items.length;
 
-  function handleSelect(id: string, checked: boolean) {
+  function handleSelect(id: number, checked: boolean) {
     setSelectedIds((current) =>
       checked
         ? [...new Set([...current, id])]
@@ -63,7 +63,7 @@ export default function CartDrawer() {
     );
   }
 
-  function handleRemove(id: string) {
+  function handleRemove(id: number) {
     removeFromCart(id);
     setSelectedIds((current) =>
       current.filter((itemId) => itemId !== id)
@@ -101,9 +101,7 @@ export default function CartDrawer() {
             </div>
 
             <div>
-              <h2 className="font-bold text-[#292335]">
-                Your Cart
-              </h2>
+              <h2 className="font-bold text-[#292335]">Your Cart</h2>
               <p className="text-xs text-[#655F6F]">
                 {cartCount} item(s)
               </p>
@@ -123,10 +121,7 @@ export default function CartDrawer() {
 
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-            <FiShoppingBag
-              size={42}
-              className="text-[#B8A4E3]"
-            />
+            <FiShoppingBag size={42} className="text-[#B8A4E3]" />
 
             <h3 className="mt-4 font-semibold text-[#292335]">
               Your cart is empty
