@@ -8,7 +8,7 @@ datasource db {
 
 model cart {
   id        Int        @id @default(autoincrement())
-  userId    Int        @unique(map: "Cart_userId_key")
+  userId    Int        @unique
   createdAt DateTime   @default(now())
   updatedAt DateTime
   user      user       @relation(fields: [userId], references: [id], map: "Cart_userId_fkey")
@@ -25,36 +25,36 @@ model cartitem {
   cart      cart    @relation(fields: [cartId], references: [id], onDelete: Cascade, map: "CartItem_cartId_fkey")
   product   product @relation(fields: [productId], references: [id], map: "CartItem_productId_fkey")
 
-  @@unique([cartId, productId], map: "CartItem_cartId_productId_key")
+  @@unique([cartId, productId])
   @@index([productId], map: "CartItem_productId_fkey")
   @@map("CartItem")
 }
 
 model category {
   id            Int        @id @default(autoincrement())
-  name          String     @unique(map: "Category_name_key")
-  parentId      Int?
+  name          String     @unique
   createdAt     DateTime   @default(now())
   updatedAt     DateTime
-  parent        category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull, map: "Category_parentId_fkey")
+  parentId      Int?
+  parent        category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], map: "Category_parentId_fkey")
   subcategories category[] @relation("CategoryHierarchy")
   product       product[]
 
-  @@index([parentId], map: "Category_parentId_idx")
+  @@index([parentId])
   @@map("Category")
 }
 
 model order {
   id            Int         @id @default(autoincrement())
   userId        Int?
-  customerName  String      @default("")
-  phone         String      @default("")
-  paymentMethod String      @default("COD")
   total         Decimal     @db.Decimal(10, 2)
   status        String      @default("PENDING")
   address       String      @db.Text
   createdAt     DateTime    @default(now())
   updatedAt     DateTime
+  customerName  String      @default("")
+  paymentMethod String      @default("COD")
+  phone         String      @default("")
   user          user?       @relation(fields: [userId], references: [id], map: "Order_userId_fkey")
   orderitem     orderitem[]
 
@@ -97,7 +97,7 @@ model product {
 model user {
   id        Int      @id @default(autoincrement())
   name      String
-  email     String   @unique(map: "User_email_key")
+  email     String   @unique
   password  String
   role      String   @default("USER")
   createdAt DateTime @default(now())
