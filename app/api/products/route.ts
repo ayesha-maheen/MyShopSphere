@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -24,6 +25,10 @@ export async function GET() {
     return NextResponse.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
+
+    if (error instanceof Error) {
+      console.error("Underlying cause:", error.cause);
+    }
 
     return NextResponse.json(
       {
@@ -128,6 +133,10 @@ export async function POST(request: Request) {
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error("Error creating product:", error);
+
+    if (error instanceof Error) {
+      console.error("Underlying cause:", error.cause);
+    }
 
     return NextResponse.json(
       {

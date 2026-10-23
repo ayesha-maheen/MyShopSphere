@@ -1,6 +1,8 @@
 
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import fs from "node:fs";
+import path from "node:path";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -13,11 +15,27 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL is not configured");
   }
 
-  const adapter = new PrismaMariaDb(databaseUrl);
+  const url = new URL(databaseUrl);
+  const caPath = path.join(process.cwd(), "ca.pem");
 
-  return new PrismaClient({
-    adapter,
+  if (!fs.existsSync(caPath)) {
+    throw new Error(`CA certificate not found: ${caPath}`);
+  }
+
+  const adapter = new PrismaMariaDb({
+    host: url.hostname,
+    port: Number(url.port || 3306),
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database: decodeURIComponent(url.pathname.slice(1)),
+    connectionLimit: 5,
+    connectTimeout: 10000,
+    ssl: {
+      ca: fs.readFileSync(caPath, "utf8"),
+    },
   });
+
+  return new PrismaClient({ adapter });
 }
 
 export const prisma =
