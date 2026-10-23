@@ -18,8 +18,16 @@ function createPrismaClient() {
   const url = new URL(databaseUrl);
   const caPath = path.join(process.cwd(), "ca.pem");
 
-  if (!fs.existsSync(caPath)) {
-    throw new Error(`CA certificate not found: ${caPath}`);
+  const ca =
+    process.env.DATABASE_CA_CERT ||
+    (fs.existsSync(caPath)
+      ? fs.readFileSync(caPath, "utf8")
+      : undefined);
+
+  if (!ca) {
+    throw new Error(
+      "Database CA certificate is not configured"
+    );
   }
 
   const adapter = new PrismaMariaDb({
@@ -31,7 +39,7 @@ function createPrismaClient() {
     connectionLimit: 5,
     connectTimeout: 10000,
     ssl: {
-      ca: fs.readFileSync(caPath, "utf8"),
+      ca,
     },
   });
 
