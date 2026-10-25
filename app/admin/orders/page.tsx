@@ -1,7 +1,6 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { FiShoppingCart, FiPackage } from "react-icons/fi";
 
 import AdminHeader from "@/components/admin/shared/AdminHeader";
@@ -9,149 +8,20 @@ import PageHeading from "@/components/admin/shared/PageHeading";
 import StatCard from "@/components/admin/shared/StatCard";
 import AdminMessage from "@/components/admin/shared/AdminMessage";
 import RefreshButton from "@/components/admin/shared/RefreshButton";
-import OrderCard from  "@/components/admin/orders/OrderCard";
+import OrderCard from "@/components/admin/orders/OrderCard";
 
-import type { Order } from "@/components/admin/orders/types";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-async function readResponse(response: Response): Promise<unknown> {
-  const text = await response.text();
-
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    throw new Error(
-      `Invalid API response. Status: ${response.status}`,
-    );
-  }
-}
-
-function getError(data: unknown): string | undefined {
-  return isRecord(data) && typeof data.error === "string"
-    ? data.error
-    : undefined;
-}
-
-function getOrders(data: unknown): Order[] | null {
-  if (Array.isArray(data)) return data as Order[];
-
-  if (isRecord(data) && Array.isArray(data.orders)) {
-    return data.orders as Order[];
-  }
-
-  return null;
-}
-
-function getUpdatedStatus(data: unknown): string | null {
-  if (!isRecord(data)) return null;
-
-  const result = isRecord(data.order) ? data.order : data;
-
-  return typeof result.status === "string" ? result.status : null;
-}
+import { useAdminOrders } from "@/components/hooks/useAdminOrders";
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
-
-  const loadOrders = useCallback(async (signal?: AbortSignal) => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await fetch("/api/admin/orders", {
-        cache: "no-store",
-        signal,
-      });
-
-      const data = await readResponse(response);
-
-      if (!response.ok) {
-        throw new Error(
-          getError(data) ?? `Orders load nahi huay: ${response.status}`,
-        );
-      }
-
-      const result = getOrders(data);
-
-      if (!result) {
-        throw new Error("API response mein orders ki list nahi mili.");
-      }
-
-      setOrders(result);
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") return;
-
-      setError(
-        err instanceof Error ? err.message : "Orders load nahi huay.",
-      );
-    } finally {
-      if (!signal?.aborted) setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    void loadOrders(controller.signal);
-
-    return () => controller.abort();
-  }, [loadOrders]);
-
-  const refreshOrders = useCallback(() => {
-    setNotice("");
-    void loadOrders();
-  }, [loadOrders]);
-
-  async function updateStatus(orderId: number, status: string) {
-    try {
-      setUpdatingId(orderId);
-      setError("");
-      setNotice("");
-
-      const response = await fetch("/api/admin/orders", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, status }),
-      });
-
-      const data = await readResponse(response);
-
-      if (!response.ok) {
-        throw new Error(
-          getError(data) ?? `Status update nahi hua: ${response.status}`,
-        );
-      }
-
-      const updatedStatus = getUpdatedStatus(data);
-
-      if (!updatedStatus) {
-        throw new Error("API ne updated order status return nahi kiya.");
-      }
-
-      setOrders((current) =>
-        current.map((order) =>
-          order.id === orderId
-            ? { ...order, status: updatedStatus }
-            : order,
-        ),
-      );
-
-      setNotice(`Order #${orderId} ka status update ho gaya.`);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Status update nahi hua.",
-      );
-    } finally {
-      setUpdatingId(null);
-    }
-  }
+  const {
+    orders,
+    loading,
+    error,
+    notice,
+    updatingId,
+    refreshOrders,
+    updateStatus,
+  } = useAdminOrders();
 
   const pendingOrders = orders.filter(
     (order) => order.status === "PENDING",
@@ -199,7 +69,9 @@ export default function AdminOrdersPage() {
           </>
         )}
 
-        {notice && <AdminMessage message={notice} type="success" />}
+        {notice && (
+          <AdminMessage message={notice} type="success" />
+        )}
 
         {loading ? (
           <div className="mt-8 rounded-2xl border border-[#E7E0EF] bg-white p-10 text-center text-[#75619A]">
@@ -213,7 +85,9 @@ export default function AdminOrdersPage() {
           <div className="mt-8 rounded-2xl border border-[#E7E0EF] bg-white p-12 text-center">
             <FiShoppingCart className="mx-auto text-4xl text-[#B8A4E3]" />
 
-            <h2 className="mt-4 text-xl font-bold">No Orders Yet</h2>
+            <h2 className="mt-4 text-xl font-bold">
+              No Orders Yet
+            </h2>
 
             <p className="mt-2 text-sm text-[#827A8D]">
               Customer orders yahan show honge jab koi order place karega.

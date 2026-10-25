@@ -1,247 +1,46 @@
+
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   FiSearch,
   FiSliders,
   FiShoppingBag,
-  FiArrowRight,
 } from "react-icons/fi";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+
+import CategoryProductCard from "@/components/categories/CategoryProductCard";
+import CategoryLoading from "@/components/categories/CategoryLoading";
+import { useCategoryPage } from "@/components/hooks/useCategoryPage";
+
 import {
-  useCategoryProducts,
-  type CategoryProduct,
-} from "@/components/hooks/useCategoryProducts";
-
-type Category = {
-  id: number;
-  name: string;
-  parentId: number | null;
-  parent: {
-    id: number;
-    name: string;
-    parentId: number | null;
-  } | null;
-  subcategories: {
-    id: number;
-    name: string;
-    parentId: number | null;
-  }[];
-  _count?: {
-    product: number;
-    subcategories: number;
-  };
-};
-
-type SortOption = "newest" | "price-low" | "price-high";
-
-function normalize(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-function getDisplayName(category: Category) {
-  const prefix = category.parent
-    ? `${category.parent.name} - `
-    : "";
-
-  if (
-    prefix &&
-    category.name.toLowerCase().startsWith(prefix.toLowerCase())
-  ) {
-    return category.name.slice(prefix.length).trim();
-  }
-
-  return category.name;
-}
-
-function formatSlugTitle(slug: string) {
-  return slug
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-function formatPrice(price: number | string) {
-  return Number(price).toLocaleString("en-PK", {
-    maximumFractionDigits: 2,
-  });
-}
-
-function ProductCard({ product }: { product: CategoryProduct }) {
-  return (
-    <Link
-      href={`/products/${product.id}`}
-      className="group overflow-hidden rounded-2xl border border-[#E7E0EF] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-lg"
-    >
-      <div className="flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#F1ECF8]">
-        {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <FiShoppingBag className="text-4xl text-[#B8A4E3]" />
-        )}
-      </div>
-
-      <div className="p-4">
-        <h2 className="line-clamp-1 font-semibold text-[#292335]">
-          {product.name}
-        </h2>
-
-        <p className="mt-2 font-bold text-[#75619A]">
-          Rs. {formatPrice(product.price)}
-        </p>
-
-        <span className="mt-3 inline-flex items-center gap-2 text-sm text-[#75619A]">
-          View Product
-          <FiArrowRight />
-        </span>
-      </div>
-    </Link>
-  );
-}
+  getDisplayName,
+  normalize,
+  type SortOption,
+} from "@/components/categories/CategoryUtils";
 
 function CategoryContent() {
   const params = useParams<{ slug: string[] }>();
+  const slugs = Array.isArray(params.slug) ? params.slug : [params.slug];
 
-  const slugs = Array.isArray(params.slug)
-    ? params.slug
-    : [params.slug];
-
-  const { products, loading, error } = useCategoryProducts(slugs);
-
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortOption>("newest");
-
-  const [categoryState, setCategoryState] = useState<{
-    categories: Category[];
-    loading: boolean;
-    error: string;
-  }>({
-    categories: [],
-    loading: true,
-    error: "",
-  });
-
-  useEffect(() => {
-    const controller = new AbortController();
-    let cancelled = false;
-
-    async function loadCategories() {
-      try {
-        const response = await fetch("/api/categories", {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error("Categories could not be loaded.");
-        }
-
-        const result: unknown = await response.json();
-
-        if (!Array.isArray(result)) {
-          throw new Error("Invalid categories response.");
-        }
-
-        if (!cancelled) {
-          setCategoryState({
-            categories: result as Category[],
-            loading: false,
-            error: "",
-          });
-        }
-      } catch (error) {
-        if (
-          cancelled ||
-          (error instanceof Error && error.name === "AbortError")
-        ) {
-          return;
-        }
-
-        if (!cancelled) {
-          setCategoryState({
-            categories: [],
-            loading: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : "An error occurred while loading categories.",
-          });
-        }
-      }
-    }
-
-    void loadCategories();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, []);
-
-  const categories = categoryState.categories;
-  const rootSlug = slugs[0] ?? "";
-
-  const rootCategory = categories.find(
-    (category) =>
-      category.parentId === null &&
-      normalize(category.name) === normalize(rootSlug)
-  );
-
-  const selectedCategory =
-    slugs.length === 1
-      ? rootCategory
-      : categories.find((category) => {
-          if (!category.parent) return false;
-
-          return (
-            normalize(category.parent.name) === normalize(rootSlug) &&
-            normalize(getDisplayName(category)) === normalize(slugs[1] ?? "")
-          );
-        });
-
-  const title = selectedCategory
-    ? getDisplayName(selectedCategory)
-    : formatSlugTitle(slugs[slugs.length - 1] ?? "");
-
-  const subcategories = rootCategory?.subcategories ?? [];
-
-  const visibleProducts = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    const filtered = products.filter((product) => {
-      return (
-        product.name.toLowerCase().includes(query) ||
-        (product.description ?? "").toLowerCase().includes(query)
-      );
-    });
-
-    return [...filtered].sort((a, b) => {
-      if (sort === "price-low") {
-        return Number(a.price) - Number(b.price);
-      }
-
-      if (sort === "price-high") {
-        return Number(b.price) - Number(a.price);
-      }
-
-      return (
-        new Date(b.createdAt ?? 0).getTime() -
-        new Date(a.createdAt ?? 0).getTime()
-      );
-    });
-  }, [products, search, sort]);
+  const {
+    products,
+    loading,
+    error,
+    search,
+    setSearch,
+    sort,
+    setSort,
+    categoryState,
+    rootSlug,
+    rootCategory,
+    title,
+    subcategories,
+  } = useCategoryPage(slugs);
 
   return (
     <>
@@ -293,12 +92,10 @@ function CategoryContent() {
                       subcategories: [],
                     });
 
-                    const subcategorySlug = normalize(displayName);
-
                     return (
                       <Link
                         key={subcategory.id}
-                        href={`/categories/${rootSlug}/${subcategorySlug}`}
+                        href={`/categories/${rootSlug}/${normalize(displayName)}`}
                         className="rounded-full border border-[#E7E0EF] bg-white px-5 py-2.5 text-sm font-medium text-[#655F6F] transition hover:border-[#B8A4E3] hover:bg-[#EEE8F7] hover:text-[#75619A]"
                       >
                         {displayName}
@@ -308,8 +105,7 @@ function CategoryContent() {
                 </div>
               ) : (
                 <p className="text-sm text-[#655F6F]">
-                  {categoryState.error ||
-                    "No subcategories available."}
+                  {categoryState.error || "No subcategories available."}
                 </p>
               )}
             </section>
@@ -324,7 +120,7 @@ function CategoryContent() {
 
                 {!loading && (
                   <p className="mt-1 text-sm text-[#655F6F]">
-                    {visibleProducts.length} products found
+                    {products.length} products found
                   </p>
                 )}
               </div>
@@ -382,10 +178,13 @@ function CategoryContent() {
               <div className="mt-6 rounded-xl border border-[#E7E0EF] bg-white p-5 text-sm text-red-700">
                 {error}
               </div>
-            ) : visibleProducts.length > 0 ? (
+            ) : products.length > 0 ? (
               <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                {visibleProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                {products.map((product) => (
+                  <CategoryProductCard
+                    key={product.id}
+                    product={product}
+                  />
                 ))}
               </div>
             ) : (
@@ -414,40 +213,6 @@ function CategoryContent() {
               </div>
             )}
           </section>
-        </div>
-      </main>
-
-      <Footer />
-    </>
-  );
-}
-
-function CategoryLoading() {
-  return (
-    <>
-      <Navbar />
-
-      <main className="min-h-screen w-full bg-[#F9F7F2] px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-7xl animate-pulse">
-          <div className="h-48 rounded-3xl bg-[#EEE8F7]" />
-
-          <div className="mt-8 h-8 w-48 rounded bg-[#E6E0F5]" />
-
-          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div
-                key={index}
-                className="overflow-hidden rounded-2xl border border-[#E7E0EF] bg-white"
-              >
-                <div className="aspect-[4/3] bg-[#EEE8F7]" />
-
-                <div className="space-y-3 p-4">
-                  <div className="h-4 rounded bg-[#EEE8F7]" />
-                  <div className="h-4 w-2/3 rounded bg-[#E6E0F5]" />
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </main>
 
