@@ -27,9 +27,15 @@ export default function FeaturedProducts() {
           signal: controller.signal,
         });
 
-        if (!response.ok) {
-          throw new Error(`Products API failed: ${response.status}`);
-        }
+       if (!response.ok) {
+  const errorData = await response.json();
+
+  console.error("Products API Error Details:", errorData);
+
+  throw new Error(
+    errorData.details || `Products API failed: ${response.status}`
+  );
+}
 
         const data: unknown = await response.json();
 

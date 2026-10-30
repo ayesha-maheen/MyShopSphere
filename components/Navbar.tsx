@@ -79,10 +79,11 @@ const categories = [
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
+  const [isCartHydrated, setIsCartHydrated] = useState(false);
 
   const navbarRef = useRef<HTMLElement>(null);
 
-  const { cartCount, openCart } = useCart();
+ const { cartCount, openCart, isHydrated } = useCart();
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -229,11 +230,12 @@ export default function Navbar() {
           >
             <FiShoppingCart className="h-5 w-5" />
 
-            {cartCount > 0 && (
-              <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#75619A] px-1 text-[9px] font-bold leading-none text-white">
-                {cartCount}
-              </span>
-            )}
+           {isHydrated && cartCount > 1 && (
+  <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#75619A] px-1 text-[9px] font-bold leading-none text-white">
+    {cartCount}
+  </span>
+)}
+        
           </button>
         </div>
       </div>

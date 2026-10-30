@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -7,31 +8,25 @@ export async function GET() {
       include: {
         category: {
           include: {
-            parent: {
+            category: {
               include: {
-                parent: true,
+                category: true,
               },
             },
-            subcategories: true,
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
       },
     });
 
     return NextResponse.json(products);
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("Products API Error:", error);
 
     return NextResponse.json(
       {
         error: "Failed to fetch products",
         details:
-          error instanceof Error
-            ? error.message
-            : String(error),
+          error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
@@ -63,8 +58,7 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         {
-          error:
-            "Valid name, price and categoryId are required",
+          error: "Valid name, price and categoryId are required",
         },
         { status: 400 }
       );
@@ -91,10 +85,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (
-      image != null &&
-      typeof image !== "string"
-    ) {
+    if (image != null && typeof image !== "string") {
       return NextResponse.json(
         { error: "Image must be a string or null" },
         { status: 400 }
@@ -114,12 +105,11 @@ export async function POST(request: Request) {
       include: {
         category: {
           include: {
-            parent: {
+            category: {
               include: {
-                parent: true,
+                category: true,
               },
             },
-            subcategories: true,
           },
         },
       },
@@ -133,9 +123,7 @@ export async function POST(request: Request) {
       {
         error: "Failed to create product",
         details:
-          error instanceof Error
-            ? error.message
-            : String(error),
+          error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

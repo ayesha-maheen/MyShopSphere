@@ -14,10 +14,10 @@ export type CategoryProduct = {
   category?: {
     id: number;
     name: string;
-    parent?: {
+    category?: {
       id: number;
       name: string;
-      parent?: {
+      category?: {
         id: number;
         name: string;
       } | null;
@@ -34,10 +34,12 @@ function normalize(value: string) {
     .replace(/^-|-$/g, "");
 }
 
-function getCategoryPath(category: NonNullable<CategoryProduct["category"]>) {
+function getCategoryPath(
+  category: NonNullable<CategoryProduct["category"]>
+) {
   const ancestors = [
-    category.parent?.parent?.name,
-    category.parent?.name,
+    category.category?.category?.name,
+    category.category?.name,
     category.name,
   ].filter((name): name is string => Boolean(name));
 
@@ -107,12 +109,10 @@ export function useCategoryProducts(slugs: string[]) {
 
           const categoryPath = getCategoryPath(product.category);
 
-          // Root category: include products from its subcategories too.
           if (requestedPath.length === 1) {
             return categoryPath[0] === requestedPath[0];
           }
 
-          // Subcategory: match the complete requested path.
           return (
             categoryPath.length >= requestedPath.length &&
             requestedPath.every(

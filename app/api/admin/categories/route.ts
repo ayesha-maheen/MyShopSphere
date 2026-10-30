@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
@@ -28,7 +29,11 @@ function unauthorized() {
 }
 
 async function validParent(parentId: unknown) {
-  if (parentId === null || parentId === undefined || parentId === "") {
+  if (
+    parentId === null ||
+    parentId === undefined ||
+    parentId === ""
+  ) {
     return { valid: true, parentId: null as number | null };
   }
 
@@ -49,6 +54,7 @@ async function validParent(parentId: unknown) {
   };
 }
 
+// GET: Fetch all categories
 export async function GET(request: NextRequest) {
   if (!(await isAdmin(request))) return unauthorized();
 
@@ -59,7 +65,7 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             product: true,
-            subcategories: true,
+            other_category: true,
           },
         },
       },
@@ -68,18 +74,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(categories);
   } catch (error) {
     console.error("GET categories error:", error);
+
     return NextResponse.json(
-      { error: "Categories could not be loaded." },
+      {
+        error: "Categories could not be loaded.",
+        details:
+          error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
+// POST: Create category
 export async function POST(request: NextRequest) {
   if (!(await isAdmin(request))) return unauthorized();
 
   try {
     const body = await request.json();
+
     const name =
       typeof body.name === "string" ? body.name.trim() : "";
 
@@ -121,18 +134,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(category, { status: 201 });
   } catch (error) {
     console.error("POST category error:", error);
+
     return NextResponse.json(
-      { error: "Category could not be created." },
+      {
+        error: "Category could not be created.",
+        details:
+          error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
+// PUT: Update category
 export async function PUT(request: NextRequest) {
   if (!(await isAdmin(request))) return unauthorized();
 
   try {
     const body = await request.json();
+
     const id = Number(body.id);
     const name =
       typeof body.name === "string" ? body.name.trim() : "";
@@ -187,7 +207,10 @@ export async function PUT(request: NextRequest) {
     while (ancestorId !== null) {
       if (ancestorId === id) {
         return NextResponse.json(
-          { error: "A category cannot be moved inside its own subcategory." },
+          {
+            error:
+              "A category cannot be moved inside its own subcategory.",
+          },
           { status: 400 }
         );
       }
@@ -212,13 +235,19 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(category);
   } catch (error) {
     console.error("PUT category error:", error);
+
     return NextResponse.json(
-      { error: "Category could not be updated." },
+      {
+        error: "Category could not be updated.",
+        details:
+          error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
+// DELETE: Delete category
 export async function DELETE(request: NextRequest) {
   if (!(await isAdmin(request))) return unauthorized();
 
@@ -239,7 +268,7 @@ export async function DELETE(request: NextRequest) {
         _count: {
           select: {
             product: true,
-            subcategories: true,
+            other_category: true,
           },
         },
       },
@@ -254,7 +283,7 @@ export async function DELETE(request: NextRequest) {
 
     if (
       category._count.product > 0 ||
-      category._count.subcategories > 0
+      category._count.other_category > 0
     ) {
       return NextResponse.json(
         {
@@ -265,15 +294,22 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.category.delete({ where: { id } });
+    await prisma.category.delete({
+      where: { id },
+    });
 
     return NextResponse.json({
       message: "Category deleted successfully.",
     });
   } catch (error) {
     console.error("DELETE category error:", error);
+
     return NextResponse.json(
-      { error: "Category could not be deleted." },
+      {
+        error: "Category could not be deleted.",
+        details:
+          error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
