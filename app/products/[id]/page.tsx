@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Suspense, useState } from "react";
@@ -34,9 +35,9 @@ function ProductDetailsContent() {
 
   if (loading) {
     return (
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
         <div className="grid animate-pulse gap-5 rounded-2xl border border-[#E7E0EF] bg-white p-4 md:grid-cols-2">
-          <div className="min-h-[280px] rounded-xl bg-[#EEE8F7]" />
+          <div className="min-h-[350px] rounded-xl bg-[#EEE8F7]" />
           <div className="space-y-4 py-3">
             <div className="h-5 w-1/3 rounded bg-[#EEE8F7]" />
             <div className="h-8 w-3/4 rounded bg-[#EEE8F7]" />
@@ -51,7 +52,7 @@ function ProductDetailsContent() {
 
   if (error || !product) {
     return (
-      <main className="mx-auto w-full max-w-5xl px-4 py-12 text-center sm:px-6">
+      <main className="mx-auto w-full max-w-7xl px-4 py-12 text-center sm:px-6">
         <h1 className="text-2xl font-bold text-[#292335]">
           Product not found
         </h1>
@@ -74,31 +75,32 @@ function ProductDetailsContent() {
   const stock = Math.max(0, Number(product.stock ?? 0));
   const price = Number(product.price ?? 0);
   const imageSrc = product.image || "/products/placeholder.png";
-  
-function handleAddToCart() {
-  if (!product || stock < 1 || quantity > stock) return;
 
-  const cartProduct = {
-    id: Number(product.id),
-    name: product.name,
-    price: Number(product.price),
-    image: product.image || "",
-  };
+  function handleAddToCart() {
+    if (!product || stock < 1 || quantity > stock) return;
 
-  for (let i = 0; i < quantity; i++) {
-    addToCart(cartProduct);
+    const cartProduct = {
+      id: Number(product.id),
+      name: product.name,
+      price: Number(product.price),
+      image: product.image || "",
+    };
+
+    for (let i = 0; i < quantity; i++) {
+      addToCart(cartProduct);
+    }
   }
-}
 
-function handleBuyNow() {
-  if (!product || stock < 1 || quantity > stock) return;
+  function handleBuyNow() {
+    if (!product || stock < 1 || quantity > stock) return;
 
-  router.push(
-    `/checkout?productId=${product.id}&quantity=${quantity}`
-  );
-}
+    router.push(
+      `/checkout?productId=${product.id}&quantity=${quantity}`
+    );
+  }
+
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+    <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       <Link
         href="/products"
         className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-[#75619A] hover:text-[#292335]"
@@ -107,20 +109,22 @@ function handleBuyNow() {
         Back to Products
       </Link>
 
-      <section className="grid gap-5 rounded-2xl border border-[#E7E0EF] bg-white p-4 shadow-sm sm:p-5 md:grid-cols-2">
-        <div className="flex min-h-[260px] items-center justify-center rounded-xl bg-[#EEE8F7] p-4 sm:min-h-[330px]">
-          <div className="relative h-[250px] w-full sm:h-[310px]">
+      <section className="grid gap-6 rounded-2xl border border-[#E7E0EF] bg-white p-4 shadow-sm sm:p-6 md:grid-cols-[1.15fr_0.85fr]">
+        {/* Product Image */}
+        <div className="flex min-h-[350px] items-center justify-center overflow-hidden rounded-xl bg-[#EEE8F7] p-3 sm:min-h-[450px] lg:min-h-[560px]">
+          <div className="relative h-[330px] w-full sm:h-[430px] lg:h-[530px]">
             <Image
               src={imageSrc}
               alt={product.name}
               fill
-              sizes="(max-width: 768px) 100vw, 50vw"
+              sizes="(max-width: 768px) 100vw, 60vw"
               className="object-contain"
               priority
             />
           </div>
         </div>
 
+        {/* Product Information */}
         <div className="flex flex-col justify-center py-1">
           {product.category?.name && (
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#75619A]">
@@ -255,7 +259,7 @@ export default function ProductDetailsPage() {
 
       <Suspense
         fallback={
-          <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+          <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
             <div className="h-80 animate-pulse rounded-2xl bg-[#EEE8F7]" />
           </div>
         }

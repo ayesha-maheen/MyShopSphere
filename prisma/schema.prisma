@@ -8,13 +8,11 @@ datasource db {
 
 model cart {
   id        Int        @id @default(autoincrement())
-  userId    Int        @unique
+  userId    Int        @unique(map: "Cart_userId_key")
   createdAt DateTime   @default(now())
   updatedAt DateTime
   user      user       @relation(fields: [userId], references: [id], map: "Cart_userId_fkey")
   cartitem  cartitem[]
-
-  @@map("Cart")
 }
 
 model cartitem {
@@ -25,23 +23,21 @@ model cartitem {
   cart      cart    @relation(fields: [cartId], references: [id], onDelete: Cascade, map: "CartItem_cartId_fkey")
   product   product @relation(fields: [productId], references: [id], map: "CartItem_productId_fkey")
 
-  @@unique([cartId, productId])
+  @@unique([cartId, productId], map: "CartItem_cartId_productId_key")
   @@index([productId], map: "CartItem_productId_fkey")
-  @@map("CartItem")
 }
 
 model category {
-  id            Int        @id @default(autoincrement())
-  name          String     @unique
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime
-  parentId      Int?
-  parent        category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], map: "Category_parentId_fkey")
-  subcategories category[] @relation("CategoryHierarchy")
-  product       product[]
+  id             Int        @id @default(autoincrement())
+  name           String     @unique(map: "Category_name_key")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime
+  parentId       Int?
+  category       category?  @relation("categoryTocategory", fields: [parentId], references: [id])
+  other_category category[] @relation("categoryTocategory")
+  product        product[]
 
   @@index([parentId])
-  @@map("Category")
 }
 
 model order {
@@ -59,7 +55,6 @@ model order {
   orderitem     orderitem[]
 
   @@index([userId], map: "Order_userId_fkey")
-  @@map("Order")
 }
 
 model orderitem {
@@ -73,7 +68,6 @@ model orderitem {
 
   @@index([orderId], map: "OrderItem_orderId_fkey")
   @@index([productId], map: "OrderItem_productId_fkey")
-  @@map("OrderItem")
 }
 
 model product {
@@ -91,19 +85,16 @@ model product {
   category    category    @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
 
   @@index([categoryId], map: "Product_categoryId_fkey")
-  @@map("Product")
 }
 
 model user {
   id        Int      @id @default(autoincrement())
   name      String
-  email     String   @unique
+  email     String   @unique(map: "User_email_key")
   password  String
   role      String   @default("USER")
   createdAt DateTime @default(now())
   updatedAt DateTime
   cart      cart?
   order     order[]
-
-  @@map("User")
 }

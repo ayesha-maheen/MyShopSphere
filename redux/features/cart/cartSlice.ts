@@ -1,3 +1,4 @@
+
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export type CartProduct = {
@@ -14,11 +15,13 @@ export type CartItem = CartProduct & {
 type CartState = {
   items: CartItem[];
   isCartOpen: boolean;
+  isHydrated: boolean;
 };
 
 const initialState: CartState = {
   items: [],
   isCartOpen: false,
+  isHydrated: false,
 };
 
 const cartSlice = createSlice({
@@ -27,7 +30,6 @@ const cartSlice = createSlice({
   reducers: {
     addItem(state, action: PayloadAction<CartProduct>) {
       const product = action.payload;
-
       const existingItem = state.items.find(
         (item) => item.id === product.id
       );
@@ -35,10 +37,7 @@ const cartSlice = createSlice({
       if (existingItem) {
         existingItem.quantity += 1;
       } else {
-        state.items.push({
-          ...product,
-          quantity: 1,
-        });
+        state.items.push({ ...product, quantity: 1 });
       }
 
       state.isCartOpen = true;
@@ -84,6 +83,12 @@ const cartSlice = createSlice({
       state.items = [];
       state.isCartOpen = false;
     },
+
+    hydrateCart(state, action: PayloadAction<CartItem[]>) {
+      state.items = action.payload;
+      state.isHydrated = true;
+      state.isCartOpen = false;
+    },
   },
 });
 
@@ -94,6 +99,7 @@ export const {
   openCart,
   closeCart,
   clearCart,
+  hydrateCart,
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

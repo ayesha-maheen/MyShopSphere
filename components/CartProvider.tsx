@@ -1,8 +1,8 @@
+
 "use client";
 
 import { type ReactNode, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import type { RootState, AppDispatch } from "@/redux/store";
 
 import {
@@ -22,6 +22,7 @@ type CartContextType = {
   cartCount: number;
   subtotal: number;
   isCartOpen: boolean;
+  isHydrated: boolean;
   addToCart: (product: CartProduct) => void;
   removeFromCart: (id: number) => void;
   updateQuantity: (id: number, quantity: number) => void;
@@ -30,28 +31,43 @@ type CartContextType = {
   clearCart: () => void;
 };
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return <>{children}</>;
 }
 
 export function useCart(): CartContextType {
   const dispatch = useDispatch<AppDispatch>();
 
-  const items = useSelector((state: RootState) => state.cart.items);
+  const items = useSelector(
+    (state: RootState) => state.cart.items
+  );
 
   const isCartOpen = useSelector(
     (state: RootState) => state.cart.isCartOpen
   );
 
+  const isHydrated = useSelector(
+    (state: RootState) => state.cart.isHydrated
+  );
+
   const cartCount = useMemo(
-    () => items.reduce((total, item) => total + item.quantity, 0),
+    () =>
+      items.reduce(
+        (total, item) => total + item.quantity,
+        0
+      ),
     [items]
   );
 
   const subtotal = useMemo(
     () =>
       items.reduce(
-        (total, item) => total + Number(item.price) * item.quantity,
+        (total, item) =>
+          total + Number(item.price) * item.quantity,
         0
       ),
     [items]
@@ -62,29 +78,16 @@ export function useCart(): CartContextType {
     cartCount,
     subtotal,
     isCartOpen,
+    isHydrated,
 
-    addToCart: (product) => {
-      dispatch(addItem(product));
-    },
+    addToCart: (product) => dispatch(addItem(product)),
+    removeFromCart: (id) => dispatch(removeItem(id)),
 
-    removeFromCart: (id) => {
-      dispatch(removeItem(id));
-    },
+    updateQuantity: (id, quantity) =>
+      dispatch(updateItemQuantity({ id, quantity })),
 
-    updateQuantity: (id, quantity) => {
-      dispatch(updateItemQuantity({ id, quantity }));
-    },
-
-    openCart: () => {
-      dispatch(openCartAction());
-    },
-
-    closeCart: () => {
-      dispatch(closeCartAction());
-    },
-
-    clearCart: () => {
-      dispatch(clearCartAction());
-    },
+    openCart: () => dispatch(openCartAction()),
+    closeCart: () => dispatch(closeCartAction()),
+    clearCart: () => dispatch(clearCartAction()),
   };
 }
